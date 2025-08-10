@@ -2,37 +2,39 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
-	"sync"
+	"time"
 )
 
+func worker(id int, jobs <-chan int) {
+	for job := range jobs {
+		fmt.Printf("Worker %d got job: %d\n", id, job)
+	}
+}
+
 func main() {
-	arg := os.Args
-	if len(arg) != 2 {
-		fmt.Println("Не правильный ввод аргумента!")
-		fmt.Println("Пример: go run main.go 1")
-		os.Exit(0)
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run main.go <num_workers>")
+		return
 	}
 
-	num, err := strconv.Atoi(arg[1])
-	var wg sync.WaitGroup
-	ch := make(chan int, num)
-
-	if err != nil {
-		log.Fatalf("Function Atoi: %v", err)
-	}
-	wg.Add(num)
-	for i := 0; i < num; i++ {
-		go func() {
-			wg.Done()
-			fmt.Println(<-ch)
-		}()
+	nWorkers, err := strconv.Atoi(os.Args[1])
+	if err != nil || nWorkers <= 0 {
+		fmt.Println("Invalid number of workers")
+		return
 	}
 
-	for i := 0; i < 100; i++ {
-		ch <- i
+	jobs := make(chan int)
+
+	for i := 1; i <= nWorkers; i++ {
+		go worker(i, jobs)
 	}
-	wg.Wait()
+
+	counter := 1
+	for {
+		jobs <- counter
+		counter++
+		time.Sleep(500 * time.Millisecond)
+	}
 }
