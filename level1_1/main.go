@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Human struct {
 	name string
 	age  int
@@ -23,4 +25,12 @@ func (h *Human) GetAge() int {
 
 type Action struct {
 	Human
+}
+
+func main() {
+	a := Action{}
+	a.SetName("Zangar")
+	a.SetAge(31)
+
+	fmt.Printf("My name is %s and I'm %d years old!\n", a.GetName(), a.GetAge())
 }
