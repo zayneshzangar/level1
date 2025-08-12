@@ -30,7 +30,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < 1000000; j++ {
+			for j := 0; j < 1000 ; j++ {
 				safeMap.Set("test-key", j)
 			}
 		}()
