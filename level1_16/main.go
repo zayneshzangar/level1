@@ -8,7 +8,7 @@ func quickSort(arr []int) []int {
 	if len(arr) <= 1 {
 		return arr
 	}
-
+	
 	pivot := arr[0] // Опорный элемент — первый
 	var left, right []int
 
