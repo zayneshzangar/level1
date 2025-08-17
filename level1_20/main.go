@@ -6,11 +6,11 @@ import (
 
 /*
 func main() {
-	s := "snow dog sun"
-	runes := strings.Split(s, " ")
-	slices.Reverse(runes)
-	s = strings.Join(runes, " ")
-	fmt.Println(s)
+    s := "snow dog sun"
+    words := strings.Split(s, " ")
+    slices.Reverse(words)
+    s = strings.Join(words, " ")
+    fmt.Println(s) // Вывод: "sun dog snow"
 }
 */
 
@@ -43,9 +43,5 @@ func ReverseWords(s string) string {
 func main() {
 	input := "snow blur sun"
 	reversed := ReverseWords(input)
-	fmt.Printf("Original: %s\nReversed: %s\n", input, reversed)
-
-	input = "Mammy world go"
-	reversed = ReverseWords(input)
 	fmt.Printf("Original: %s\nReversed: %s\n", input, reversed)
 }
