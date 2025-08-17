@@ -16,8 +16,4 @@ func main() {
 	input := "главрыба"
 	reversed := Reverse(input)
 	fmt.Printf("Original: %s\nReversed: %s\n", input, reversed)
-
-	input = "hello 🌍"
-	reversed = Reverse(input)
-	fmt.Printf("Original: %s\nReversed: %s\n", input, reversed)
 }
