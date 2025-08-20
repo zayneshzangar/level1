@@ -6,12 +6,6 @@ func main() {
   a := [5]int{76, 77, 78, 79, 80}
   var b []int = a[1:4]
   fmt.Println(b)
-  b[0] = 50
-  fmt.Println(a, cap(a), len(a))
-  fmt.Println(b, cap(b), len(b))
-  b = append(b, 5)
-  fmt.Println(a, cap(a), len(a))
-  fmt.Println(b, cap(b), len(b))
 }
 
 /*
