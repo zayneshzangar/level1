@@ -7,7 +7,7 @@ func main() {
 	ch2 := make(chan int)
 	arr := []int{1, 2, 3, 4, 5}
 	go func(ch <-chan int) {
-		for n := range ch1 {
+		for n := range ch {
 			ch2 <- n * 2
 		}
 		close(ch2)
