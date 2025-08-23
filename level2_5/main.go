@@ -22,3 +22,10 @@ func main() {
 	}
 	println("ok")
 }
+
+
+/*
+Вывод: error
+Причина: Интерфейс err получает тип *customError и значение nil из test(), что делает err != nil. 
+Условие if срабатывает, выводя "error".
+*/
