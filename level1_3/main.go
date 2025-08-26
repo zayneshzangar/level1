@@ -37,4 +37,5 @@ func main() {
 		counter++
 		time.Sleep(500 * time.Millisecond)
 	}
+	close(jobs)
 }
