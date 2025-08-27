@@ -59,16 +59,23 @@ func Unpack(s string) (string, error) {
 	return b.String(), nil
 }
 
+
 func main() {
-	test1 := "qwe\\45"
-	result1, err := Unpack(test1)
-	if err != nil {
-		fmt.Printf("failed: %v\n", err)
-		return
-	}
-	expected1 := "qwe44444"
-	if result1 == expected1 {
-		fmt.Println("test1 is good!")
+	tests := []string{
+		"a4bc2d5e",
+		"abcd",
+		"45",
+		"",
+		"qwe\\4\\5",
+		"qwe\\45",
 	}
 
+	for _, t := range tests {
+		result, err := Unpack(t)
+		if err != nil {
+			fmt.Printf("input: %-8q -> error: %v\n", t, err)
+		} else {
+			fmt.Printf("input: %-8q -> output: %q\n", t, result)
+		}
+	}
 }
