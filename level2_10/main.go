@@ -55,6 +55,9 @@ func (bc *byColumn) Swap(i, j int)      { bc.lines[i], bc.lines[j] = bc.lines[j]
 func (bc *byColumn) Less(i, j int) bool {
 	a := bc.getKey(bc.lines[i])
 	b := bc.getKey(bc.lines[j])
+	if a == "" && b == "" {
+		return false // Стабильная сортировка для пустых ключей
+	}
 	if bc.config.reverse {
 		return a > b
 	}
@@ -162,13 +165,15 @@ func main() {
 
 	// Удаление дубликатов
 	if config.unique {
-		uniqueLines := []string{lines[0]}
-		for i := 1; i < len(lines); i++ {
-			if lines[i] != lines[i-1] { // Сравниваем полные строки для уникальности
-				uniqueLines = append(uniqueLines, lines[i])
+		if len(lines) > 0 { // Проверяем, что есть строки
+			uniqueLines := []string{lines[0]}
+			for i := 1; i < len(lines); i++ {
+				if lines[i] != lines[i-1] { // Сравниваем полные строки для уникальности
+					uniqueLines = append(uniqueLines, lines[i])
+				}
 			}
+			lines = uniqueLines
 		}
-		lines = uniqueLines
 	}
 
 	// Вывод
