@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Shortener</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        input, button { margin: 10px 0; padding: 8px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        <form id="shorten-form">
+            <input type="text" id="original_url" placeholder="Enter URL (e.g., https://example.com)" required>
+            <input type="text" id="custom_short" placeholder="Custom short URL (optional)">
+            <button type="submit">Shorten</button>
+        </form>
+        <p id="result"></p>
+        <h2>Analytics</h2>
+        <input type="text" id="analytics_short" placeholder="Enter short URL for analytics">
+        <button onclick="getAnalytics()">Get Analytics</button>
+        <div id="analytics-result"></div>
+    </div>
+
+    <script>
+        document.getElementById('shorten-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const originalURL = document.getElementById('original_url').value;
+            const customShort = document.getElementById('custom_short').value;
+            const response = await fetch('/shorten', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `original_url=${encodeURIComponent(originalURL)}&custom_short=${encodeURIComponent(customShort)}`
+            });
+            const data = await response.json();
+            document.getElementById('result').innerText = response.ok ? 
+                `Short URL: /s/${data.result}` : `Error: ${data.error}`;
+        });
+
+        async function getAnalytics() {
+            const shortURL = document.getElementById('analytics_short').value;
+            const response = await fetch(`/analytics/${shortURL}`);
+            const data = await response.json();
+            const resultDiv = document.getElementById('analytics-result');
+            if (!response.ok) {
+                resultDiv.innerText = `Error: ${data.error}`;
+                return;
+            }
+            const analytics = data.result;
+            resultDiv.innerHTML = `
+                <p>Total Clicks: ${analytics.total_clicks}</p>
+                <h3>By Day</h3>
+                <table>
+                    <tr><th>Date</th><th>Clicks</th></tr>
+                    ${Object.entries(analytics.by_day).map(([date, count]) => 
+                        `<tr><td>${date}</td><td>${count}</td></tr>`).join('')}
+                </table>
+                <h3>By Month</h3>
+                <table>
+                    <tr><th>Month</th><th>Clicks</th></tr>
+                    ${Object.entries(analytics.by_month).map(([month, count]) => 
+                        `<tr><td>${month}</td><td>${count}</td></tr>`).join('')}
+                </table>
+                <h3>By User-Agent</h3>
+                <table>
+                    <tr><th>User-Agent</th><th>Clicks</th></tr>
+                    ${Object.entries(analytics.by_user_agent).map(([ua, count]) => 
+                        `<tr><td>${ua}</td><td>${count}</td></tr>`).join('')}
+                </table>
+            `;
+        }
+    </script>
+</body>
+</html>
