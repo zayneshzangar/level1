@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>CommentTree — Древовидные комментарии</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .comment { margin-left: 20px; border-left: 2px solid #ccc; padding-left: 10px; }
+        .comment-header { font-weight: bold; }
+        .comment-content { margin: 5px 0; }
+        .delete-btn { color: red; cursor: pointer; margin-left: 10px; }
+        input[type="text"] { width: 70%; padding: 5px; }
+        button { padding: 5px 10px; }
+        #search { margin-bottom: 20px; }
+        #error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>CommentTree</h1>
+    
+    <!-- Поиск -->
+    <div id="search">
+        <input type="text" id="searchInput" placeholder="Поиск по ключевым словам...">
+        <button id="searchBtn">Найти</button>
+        <button id="clearBtn">Очистить</button>
+    </div>
+    
+    <!-- Ошибки -->
+    <div id="error"></div>
+    
+    <!-- Дерево комментариев -->
+    <div id="commentsTree">Загрузка...</div>
+    
+    <!-- Форма создания/ответа -->
+    <div style="margin-top: 20px;">
+        <input type="text" id="newContent" placeholder="Введите текст комментария...">
+        <input type="hidden" id="replyToId" value="">
+        <button id="addCommentBtn">Добавить комментарий</button>
+        <button id="replyBtn">Ответить на выделенный</button>
+    </div>
+
+    <script>
+        let currentParentId = null;
+        let searchQuery = '';
+
+        // Показ ошибок
+        function showError(message) {
+            document.getElementById('error').innerText = message;
+            console.error('Ошибка:', message);
+        }
+
+        // Очистка ошибок
+        function clearError() {
+            document.getElementById('error').innerText = '';
+        }
+
+        // Загрузка комментариев
+        function loadComments(page = 1, parentId = null) {
+            clearError();
+            currentParentId = parentId;
+            const url = parentId 
+                ? `/comments?parent=${parentId}` 
+                : `/comments?page=${page}&limit=10&sort=asc${searchQuery ? '&search=' + encodeURIComponent(searchQuery) : ''}`;
+            console.log('Запрос к API:', url);
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Данные от API:', data);
+                    document.getElementById('commentsTree').innerHTML = renderTree(data.comments || [], 0);
+                    if (data.pages > 1 && !parentId) {
+                        let nav = '<div>Страницы: ';
+                        for (let p = 1; p <= data.pages; p++) {
+                            nav += `<button onclick="loadComments(${p})">${p}</button> `;
+                        }
+                        nav += '</div>';
+                        document.getElementById('commentsTree').innerHTML += nav;
+                    }
+                })
+                .catch(err => {
+                    showError('Ошибка загрузки: ' + err.message);
+                });
+        }
+
+        // Рендер дерева
+        function renderTree(comments, level = 0) {
+            if (!comments || comments.length === 0) return '<p>Нет комментариев.</p>';
+            let html = '';
+            comments.forEach(comment => {
+                const indent = '&nbsp;'.repeat(level * 3) + (level > 0 ? '↳ ' : '');
+                const created = new Date(comment.created_at).toLocaleString('ru');
+                html += `
+                    <div class="comment" style="margin-left: ${level * 20}px;">
+                        <div class="comment-header">
+                            ${indent}ID: ${comment.id} | ${created}
+                            <span class="delete-btn" onclick="deleteComment(${comment.id})">[Удалить]</span>
+                            <span onclick="setReplyTo(${comment.id})" style="cursor: pointer; color: blue;">[Ответить]</span>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                        ${renderTree(comment.children || [], level + 1)}
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // Создание комментария
+        function createComment() {
+            clearError();
+            const content = document.getElementById('newContent').value.trim();
+            if (!content) {
+                showError('Введите текст комментария!');
+                return;
+            }
+            const parentId = document.getElementById('replyToId').value || null;
+            const payload = { content };
+            if (parentId) payload.parent_id = parseInt(parentId);
+            
+            console.log('Отправка:', payload);
+            fetch('/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Создан комментарий:', data);
+                    document.getElementById('newContent').value = '';
+                    document.getElementById('replyToId').value = '';
+                    loadComments(1, currentParentId);
+                })
+                .catch(err => {
+                    showError('Ошибка создания: ' + err.message);
+                });
+        }
+
+        // Удаление комментария
+        function deleteComment(id) {
+            clearError();
+            if (!confirm('Удалить комментарий и все ответы?')) return;
+            fetch(`/comments/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(() => loadComments(1, currentParentId))
+                .catch(err => {
+                    showError('Ошибка удаления: ' + err.message);
+                });
+        }
+
+        // Поиск
+        function searchComments() {
+            clearError();
+            searchQuery = document.getElementById('searchInput').value.trim();
+            loadComments(1);
+        }
+
+        // Установка parent_id для ответа
+        function setReplyTo(id) {
+            document.getElementById('replyToId').value = id;
+            alert('Выбран комментарий с ID ' + id + ' для ответа.');
+        }
+
+        // Проверка ответа
+        function replyToSelected() {
+            clearError();
+            const parentId = document.getElementById('replyToId').value;
+            if (!parentId) {
+                showError('Выберите комментарий для ответа, нажав [Ответить]');
+                return;
+            }
+            alert('Теперь ответ будет на комментарий с ID ' + parentId + '. Введите текст и нажмите "Добавить".');
+        }
+
+        // Добавление обработчиков событий
+        document.getElementById('addCommentBtn').addEventListener('click', createComment);
+        document.getElementById('searchBtn').addEventListener('click', searchComments);
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            loadComments();
+        });
+        document.getElementById('replyBtn').addEventListener('click', replyToSelected);
+
+        // Инициализация
+        loadComments();
+    </script>
+</body>
+</html>
